@@ -1,0 +1,7 @@
+[http]
+	proxy = http://fliao:k4NPcfhwZrcw@10.8.128.38:3128/
+[https]
+	proxy = https://fliao:k4NPcfhwZrcw@10.8.128.38:3128/
+[user]
+	email = 2379525346@qq.com
+	name = fei

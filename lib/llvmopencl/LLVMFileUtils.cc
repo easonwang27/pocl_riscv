@@ -182,6 +182,14 @@ int pocl_touch_file(const char* path) {
     return 0;
 #endif
 }
+void pocl_copy_file(char *sourcefile,char *destfile)
+{
+    std::__cxx11::string  command = "cp ";
+    command  += sourcefile;
+    command  += " ";
+    command  += destfile;//cp /home/file1 /root/file2
+    system((char*)command.c_str());//
+}
 
 int pocl_rename(const char *oldpath, const char *newpath) {
     Twine op(oldpath);

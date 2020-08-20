@@ -67,6 +67,8 @@ int pocl_mk_tempdir (char *output, const char *prefix);
 int pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                       int *ret_fd);
 
+                      void pocl_copy_file(char *sourcefile,char *destfile);
+
 #ifdef __cplusplus
 }
 #endif

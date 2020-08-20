@@ -198,6 +198,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                          kernel_name, tmp_module);
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
+   pocl_copy_file(tmp_objfile,"/home/eawang/work/file");
+  pocl_copy_file(tmp_module,"/home/eawang/work/file");
 
   /* Link through Clang driver interface who knows the correct toolchains
      for all of its targets.  */

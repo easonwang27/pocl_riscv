@@ -531,7 +531,7 @@ int pocl_llvm_build_program(cl_program program,
     if (num_input_headers > 0)
       pocl_rm_rf(temp_include_dir);
   }
-
+  
   if (PreprocessedOut == nullptr) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
