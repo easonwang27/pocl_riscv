@@ -363,7 +363,7 @@ pocl_init_riscv_device_infos (cl_device_id dev)
 #ifdef HOST_CPU_FORCED
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
-  dev->llvm_cpu = "rocket-rv64";
+  dev->llvm_cpu = "sifive-u54";
 #endif
 
   dev->spirv_version = "SPIR-V_1.2";

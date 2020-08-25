@@ -1262,7 +1262,7 @@ endif()
 if(ENABLE_MONTAGE_DEVICES)
   set(OCL_DRIVERS "${OCL_DRIVERS} montage")
   message($OCL_DRIVERS)
-  set(OCL_TARGETS "${OCL_TARGETS} riscv")
+  set(OCL_TARGETS "${OCL_TARGETS} montage")
   message($OCL_TARGETS)
   #set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
   #set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
