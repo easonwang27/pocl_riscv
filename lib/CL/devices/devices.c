@@ -90,6 +90,10 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_BASIC
   NULL,
 #endif
+#ifdef BUILD_MONTAGE
+  NULL,
+#endif
+
 #ifdef BUILD_PTHREAD
   NULL,
 #endif
@@ -112,6 +116,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #ifdef BUILD_BASIC
   "basic",
+#endif
+#ifdef BUILD_MONTAGE
+  "montage",
 #endif
 #ifdef BUILD_PTHREAD
   "pthread",

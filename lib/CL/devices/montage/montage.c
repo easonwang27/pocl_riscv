@@ -110,7 +110,6 @@ void
 pocl_montage_init_device_ops(struct pocl_device_ops *ops)
 {
   ops->device_name = "montage";
-
   ops->probe = pocl_montage_probe;
   ops->uninit = pocl_montage_uninit;
   ops->reinit = pocl_montage_reinit;
