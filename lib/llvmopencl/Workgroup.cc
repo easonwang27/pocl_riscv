@@ -238,6 +238,7 @@ Workgroup::runOnModule(Module &M) {
     privatizeContext(L);
 
     if (currentPoclDevice->arg_buffer_launcher) {
+  
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(L, OrigKernel.getName().str());
       L->addFnAttr(Attribute::NoInline);
@@ -245,6 +246,7 @@ Workgroup::runOnModule(Module &M) {
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
       createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
     } else if (currentPoclDevice->spmd) {
+  
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
       kernels[&OrigKernel] = L;

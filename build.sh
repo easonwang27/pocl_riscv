@@ -1,6 +1,5 @@
 cd  build
-cmake  ../ -G "Unix Makefiles" -DLLC_HOST_CPU=sifive-u54 -DLLC_TRIPLE=riscv64
--DPOCL_INSTALL_ICD_VENDORDIR=/etc/OpenCL/vendors
+ cmake  ../ -G "Unix Makefiles" -DPOCL_VECTORIZER_REMARKS=1 -DPOCL_INSTALL_ICD_VENDORDIR=/etc/OpenCL/vendors
 -DCLANG:FILEPATH=/home/eawang/work/llvm_lib/bin/clang
 -DCLANGXX:FILEPATH=/home/eawang/work/llvm_lib/bin/clang++
 -DLLVM_AS:FILEPATH=/home/eawang/work/llvm_lib/bin/llvm-as
@@ -9,5 +8,8 @@ cmake  ../ -G "Unix Makefiles" -DLLC_HOST_CPU=sifive-u54 -DLLC_TRIPLE=riscv64
 -DLLVM_LLC:FILEPATH=/home/eawang/work/llvm_lib/bin/llc
 -DLLVM_LLI:FILEPATH=/home/eawang/work/llvm_lib/bin/lli
 -DLLVM_OPT:FILEPATH=/home/eawang/work/llvm_lib/bin/opt
+
 make -j8
+
+sudo make install
 cd ..
