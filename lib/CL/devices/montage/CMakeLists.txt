@@ -22,8 +22,7 @@
 #   THE SOFTWARE.
 #
 #=============================================================================
-
 if(MSVC)
   set_source_files_properties( montage.h montage.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-montage" OBJECT montage.h montage.c)
+add_pocl_device_library("pocl-devices-montage" montage.h montage.c)

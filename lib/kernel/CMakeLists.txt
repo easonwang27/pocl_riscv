@@ -218,6 +218,11 @@ if(OCL_TARGETS MATCHES "cuda")
   add_subdirectory("cuda")
 endif()
 
+if(OCL_TARGETS MATCHES "montage")
+  add_subdirectory("montage")
+endif()
+
+
 #*********************************************************************
 
 # "Escape" a list before passing to an external command

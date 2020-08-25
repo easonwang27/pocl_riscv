@@ -1093,10 +1093,10 @@ set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 # HSA and pthread drivers require basic driver
 if(ENABLE_HSA OR ENABLE_HOST_CPU_DEVICES)
   set(BUILD_BASIC 1)
-  //set(BUILD_MONTAGE 1)
+  set(BUILD_MONTAGE 1)
 endif()
 
-if(ENABLE_HOST_CPU_DEVICES)
+if(ENABLE_HOST_CPU_DEVICES_1)
   set(OCL_TARGETS "host")
   set(OCL_DRIVERS "basic pthreads")
   # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
@@ -1260,6 +1260,8 @@ if(ENABLE_CUDA)
 endif()
 
 if(ENABLE_MONTAGE_DEVICES)
+  
+  message("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
   set(OCL_DRIVERS "${OCL_DRIVERS} montage")
   message($OCL_DRIVERS)
   set(OCL_TARGETS "${OCL_TARGETS} montage")

@@ -34,6 +34,10 @@ if(BUILD_BASIC)
   add_subdirectory("basic")
 endif()
 
+if(BUILD_MONTAGE)
+  add_subdirectory("montage")
+endif()
+
 if(BUILD_PTHREAD)
   add_subdirectory("pthread")
 endif()
@@ -60,6 +64,7 @@ endif()
 if(ENABLE_CUDA)
   add_subdirectory("cuda")
 endif()
+
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c

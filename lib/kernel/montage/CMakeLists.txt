@@ -40,7 +40,7 @@ foreach(FILE
   wait_group_events.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
-  list(APPEND KERNEL_SOURCES "riscv/${FILE}")
+  list(APPEND KERNEL_SOURCES "montage/${FILE}")
 endforeach()
 
 #list(APPEND KERNEL_SOURCES "cuda/nvvm_functions.ll")
