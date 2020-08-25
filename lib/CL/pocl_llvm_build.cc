@@ -841,6 +841,12 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
     is_host = false;
   }
 #endif
+
+#ifdef BUILD_MONTAGE
+    subdir = "montage";
+    is_host = false;
+#endif
+
 #ifdef AMDGCN_ENABLED
   if (triple.getArch == Triple::amdgcn) {
     subdir = "amdgcn";

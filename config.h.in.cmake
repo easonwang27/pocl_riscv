@@ -4,6 +4,7 @@
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
+#cmakedefine BUILD_MONTAGE
 
 #define BUILDDIR "@BUILDDIR@"
 

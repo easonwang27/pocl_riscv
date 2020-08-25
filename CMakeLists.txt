@@ -170,6 +170,7 @@ option(POCL_DEBUG_MESSAGES
 option(ENABLE_HSA "Enable the HSA base profile runtime device driver" OFF)
 
 option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
+option(ENABLE_MONTAGE_DEVICES "Enable the riscv device driver for MONTAGE devices" OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
@@ -1092,6 +1093,7 @@ set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 # HSA and pthread drivers require basic driver
 if(ENABLE_HSA OR ENABLE_HOST_CPU_DEVICES)
   set(BUILD_BASIC 1)
+  //set(BUILD_MONTAGE 1)
 endif()
 
 if(ENABLE_HOST_CPU_DEVICES)
@@ -1257,6 +1259,20 @@ if(ENABLE_CUDA)
   set(CUDA_DEVICE_CL_STD "1.2")
 endif()
 
+if(ENABLE_MONTAGE_DEVICES)
+  set(OCL_DRIVERS "${OCL_DRIVERS} montage")
+  message($OCL_DRIVERS)
+  set(OCL_TARGETS "${OCL_TARGETS} riscv")
+  message($OCL_TARGETS)
+  #set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
+  #set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+
+  set(MONTAGE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(MONTAGE_DEVICE_CL_VERSION "120")
+  set(MONTAGE_DEVICE_CL_STD "1.2")
+  set(BUILD_MONTAGE 1)
+  message($BUILD_MONTAGE)
+endif()
 ##########################################################
 
 message(STATUS "Building the following device drivers: ${OCL_DRIVERS}")
@@ -1642,6 +1658,7 @@ MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
+MESSAGE(STATUS "ENABLE_MONTAGE_DEVICES: ${ENABLE_MONTAGE_DEVICES}")
 MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
