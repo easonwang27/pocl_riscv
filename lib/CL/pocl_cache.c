@@ -209,6 +209,13 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                                    specialized);
 }
 
+
+void
+pocl_cache_final_lld_path (char *parallel_path,const char *kernel_name)
+{
+  int  bytes_written = snprintf (parallel_path, POCL_FILENAME_LENGTH,"%s/%s.so", cache_topdir,kernel_name);
+}
+
 /******************************************************************************/
 /******************************************************************************/
 

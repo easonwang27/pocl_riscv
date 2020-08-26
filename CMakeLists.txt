@@ -1260,8 +1260,7 @@ if(ENABLE_CUDA)
 endif()
 
 if(ENABLE_MONTAGE_DEVICES)
-  
-  message("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
   set(OCL_DRIVERS "${OCL_DRIVERS} montage")
   message($OCL_DRIVERS)
   set(OCL_TARGETS "${OCL_TARGETS} montage")

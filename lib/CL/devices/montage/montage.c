@@ -126,7 +126,8 @@ pocl_montage_init_device_ops(struct pocl_device_ops *ops)
   ops->map_mem = pocl_montage_map_mem;
   ops->compile_kernel = pocl_montage_compile_kernel;
   ops->unmap_mem = pocl_montage_unmap_mem;
-  ops->run = pocl_montage_run;
+  ops->run = NULL;
+  //ops->run = pocl_montage_run;
   ops->run_native = pocl_montage_run_native;
   ops->join = pocl_montage_join;
   ops->submit = pocl_montage_submit;
@@ -141,19 +142,19 @@ pocl_montage_init_device_ops(struct pocl_device_ops *ops)
    * and pocl_exec_command takes care of it */
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
-  ops->svm_copy = pocl_montage_svm_copy;
-  ops->svm_fill = pocl_montage_svm_fill;
+  ops->svm_copy = NULL;
+  ops->svm_fill = NULL;
 
   ops->create_image = NULL;
   ops->free_image = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
-  ops->copy_image_rect = pocl_montage_copy_image_rect;
-  ops->write_image_rect = pocl_montage_write_image_rect;
-  ops->read_image_rect = pocl_montage_read_image_rect;
-  ops->map_image = pocl_montage_map_image;
-  ops->unmap_image = pocl_montage_unmap_image;
-  ops->fill_image = pocl_montage_fill_image;
+  ops->copy_image_rect = NULL;
+  ops->write_image_rect = NULL;
+  ops->read_image_rect = NULL;
+  ops->map_image = NULL;
+  ops->unmap_image = NULL;
+  ops->fill_image = NULL;
 }
 
 char *
