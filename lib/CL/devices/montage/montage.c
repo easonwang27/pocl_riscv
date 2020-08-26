@@ -557,50 +557,47 @@ pocl_montage_write (void *data,
   memcpy ((char *)device_ptr + offset, host_ptr, size);
 }
 
+extern char final_lld_path[POCL_FILENAME_LENGTH];
 void
 pocl_montage_launch(void *data, _cl_command_node *cmd)
 {
-  #if 0
+
   struct data *d;
-  struct pocl_argument *al;
-  size_t x, y, z;
-  unsigned i;
-  cl_kernel kernel = cmd->command.run.kernel;
-  pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
-  printf("===> %s %d\n",__func__,__LINE__);
-  assert (data != NULL);
-  d = (struct data *) data;
+  unsigned i;
+  int j = 1;
 
-  d->current_kernel = kernel;
+  char *PreprocessedOut = NULL;
+  uint64_t PreprocessedSize = 0;
+  
+  printf("=============>command_node->command.run.pc.local_size[0]: %ld\n ",cmd->command.run.pc.local_size[0]);
+  pocl_read_file(final_lld_path, &PreprocessedOut, &PreprocessedSize);
+  printf("kernel size :%ld\n",PreprocessedSize);
 
+	printf("###### %s ######\n", __func__);
+	for (i = 0; i < PreprocessedSize; i++) {
+		printf("%08x-", *(PreprocessedOut+i));
+		if (j%10 == 0)
+			printf("\n");
+		j++;
+	}
+	printf("\n");
+  /* always remove preprocessed output - the sources are in different files */
+  //pocl_remove(final_lld_path);
+  POCL_MONTAGE_MSG("lauch kernel bin send to device\n");
+
+
+#if 0
   void **arguments = (void **)malloc (sizeof (void *)
                                       * (meta->num_args + meta->num_locals));
-
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
-  for (i = 0; i < meta->num_args; ++i)
+
+    for (i = 0; i < meta->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
-        {
-          if (cmd->device->device_alloca_locals)
-            {
-              /* Local buffers are allocated in the device side work-group
-                 launcher. Let's pass only the sizes of the local args in
-                 the arg buffer. */
-              assert (sizeof (size_t) == sizeof (void *));
-              arguments[i] = (void *)al->size;
-            }
-          else
-            {
-              arguments[i] = malloc (sizeof (void *));
-              *(void **)(arguments[i]) =
-                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
-            }
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+      if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In
              that case we must pass the same NULL forward to the kernel.
@@ -618,29 +615,10 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
               *(void **)arguments[i] = (char *)ptr + al->offset;
             }
         }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
-        {
-          dev_image_t di;
-          fill_dev_image_t (&di, al, cmd->device);
-
-          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                              sizeof (dev_image_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          memcpy (devptr, &di, sizeof (dev_image_t));
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          dev_sampler_t ds;
-          fill_dev_sampler_t(&ds, al);
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = (void *)ds;
-        }
-      else
-        {
-          arguments[i] = al->value;
-        }
     }
+    printf("meta->num_args  :%d\n",meta->num_args);
+   
+
 
   if (!cmd->device->device_alloca_locals)
     for (i = 0; i < meta->num_locals; ++i)
@@ -713,15 +691,14 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
         POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
         POCL_MEM_FREE (arguments[meta->num_args + i]);
       }
-  free(arguments);
+ 
 
   pocl_release_dlhandle_cache (cmd);
-
+  free(arguments);
   #else
+ 
 
   POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
-
-
   #endif
 }
 

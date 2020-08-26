@@ -201,7 +201,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                                            &local_z);
     }
 
-  POCL_MSG_PRINT_INFO("Queueing kernel %s with local size %u x %u x %u group "
+  printf("Queueing kernel %s with local size %u x %u x %u group "
                       "sizes %u x %u x %u...\n",
                       kernel->name,
                       (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
@@ -307,6 +307,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc.local_size[0] = local_x;
+
+  printf("=============>command_node->command.run.pc.local_size[0]: %ld\n ",command_node->command.run.pc.local_size[0]);
   command_node->command.run.pc.local_size[1] = local_y;
   command_node->command.run.pc.local_size[2] = local_z;
   command_node->command.run.pc.work_dim = work_dim;

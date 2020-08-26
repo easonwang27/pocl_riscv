@@ -4,6 +4,9 @@
         "config.h": "c",
         "typeinfo": "c",
         "*.inc": "c",
-        "montage.h": "c"
+        "montage.h": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "algorithm": "c"
     }
 }

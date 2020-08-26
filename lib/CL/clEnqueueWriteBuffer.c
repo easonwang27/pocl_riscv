@@ -81,11 +81,17 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                                  event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
-
+  
   cmd->command.write.src_host_ptr = ptr;
   cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.write.offset = offset;
   cmd->command.write.size = size;
+  printf("=====> size = %ld\n",size/4);
+  //MONTAGE SERIAL INTERFACE
+  for( i = 0; i< 10;i++)
+  {
+     printf("%d\n",((int *)ptr)[i]); //MEMORY
+  }
 
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;

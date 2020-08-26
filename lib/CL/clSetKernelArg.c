@@ -152,6 +152,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
       p->value = NULL;
     }
 
+  printf("arg_index :%d\n",arg_index);
+
 #if 0
   printf(
       "### clSetKernelArg for %s arg %d (size %u) set to %x points to %x\n", 

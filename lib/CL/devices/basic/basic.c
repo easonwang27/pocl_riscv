@@ -182,7 +182,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   if (err)
     ret = CL_INVALID_DEVICE;
 
-  POCL_INIT_LOCK (d->cq_lock);
+  POCL_INIT_LOCK (d->cq_lock); 
 
   assert (device->printf_buffer_size > 0);
   d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
@@ -336,7 +336,6 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 
   void **arguments = (void **)malloc (sizeof (void *)
                                       * (meta->num_args + meta->num_locals));
-
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */

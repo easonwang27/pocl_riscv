@@ -117,7 +117,7 @@ int file_size(char* filename)
     
   return size; 
 } 
-
+char final_lld_path[POCL_FILENAME_LENGTH];
 int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
@@ -147,7 +147,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                                 command, specialize);
 
 //kernel.ldd
-  char final_lld_path[POCL_FILENAME_LENGTH];
+
   pocl_cache_final_lld_path (final_lld_path,kernel_name);
 
   if (pocl_exists (final_binary_path))
