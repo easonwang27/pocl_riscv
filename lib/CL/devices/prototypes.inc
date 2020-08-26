@@ -82,6 +82,7 @@
                                  const void *__restrict__ pattern,            \
                                  size_t pattern_size);                        \
   void pocl_##__DRV__##_run (void *data, _cl_command_node *cmd);              \
+  void pocl_##__DRV__##_launch (void *data, _cl_command_node *cmd);              \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node *cmd);       \
   cl_int pocl_##__DRV__##_map_mem (void *data,                                \
                                    pocl_mem_identifier *src_mem_id,           \

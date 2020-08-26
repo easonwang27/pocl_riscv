@@ -1010,7 +1010,6 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
       int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
                                 specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
-      printf("binary_sizes = %ld\n",p->binary_sizes[dev_i]);
       if (error)
         POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
       POCL_MSG_PRINT_INFO ("Built a WG function: %s\n", module_fn);

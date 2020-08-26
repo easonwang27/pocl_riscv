@@ -3,6 +3,7 @@
         "*.def": "cpp",
         "config.h": "c",
         "typeinfo": "c",
-        "*.inc": "c"
+        "*.inc": "c",
+        "montage.h": "c"
     }
 }

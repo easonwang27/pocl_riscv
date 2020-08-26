@@ -126,7 +126,7 @@ pocl_montage_init_device_ops(struct pocl_device_ops *ops)
   ops->map_mem = pocl_montage_map_mem;
   ops->compile_kernel = pocl_montage_compile_kernel;
   ops->unmap_mem = pocl_montage_unmap_mem;
-  ops->run = NULL;
+  ops->run = pocl_montage_launch;  //add lunch
   //ops->run = pocl_montage_run;
   ops->run_native = pocl_montage_run_native;
   ops->join = pocl_montage_join;
@@ -558,7 +558,7 @@ pocl_montage_write (void *data,
 }
 
 void
-pocl_montage_run (void *data, _cl_command_node *cmd)
+pocl_montage_launch(void *data, _cl_command_node *cmd)
 {
   struct data *d;
   struct pocl_argument *al;
@@ -567,7 +567,7 @@ pocl_montage_run (void *data, _cl_command_node *cmd)
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
-
+  printf("===> %s %d\n",__func__,__LINE__);
   assert (data != NULL);
   d = (struct data *) data;
 
