@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "*.def": "cpp",
-        "config.h": "c"
+        "config.h": "c",
+        "typeinfo": "c",
+        "*.inc": "c"
     }
 }

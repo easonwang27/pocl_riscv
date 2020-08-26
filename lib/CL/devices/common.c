@@ -107,6 +107,17 @@ get_system_output(char *cmd, char *output, int size)
     return 0;
 }
 
+int file_size(char* filename) 
+{ 
+  FILE *fp=fopen(filename,"r"); 
+  if(!fp) return -1; 
+  fseek(fp,0L,SEEK_END); 
+  int size=ftell(fp); 
+  fclose(fp); 
+    
+  return size; 
+} 
+
 int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
@@ -233,6 +244,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   printf("cmd str :%s\n",cmd_str);
   get_system_output(cmd_str,final_lld_path,1024);
   pocl_copy_file(final_lld_path,"/home/eawang/work/file");
+  printf("=====> %d\n",file_size(final_lld_path));
  
 #else
 
@@ -251,7 +263,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
       goto FINISH;
     }
-#endif
+
   /* rename temporary kernel.so */
   error = pocl_rename (tmp_module, final_binary_path);
   if (error)
@@ -276,7 +288,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       if (error)
         POCL_MSG_PRINT_LLVM ("Removing temporary kernel.so.o has failed.\n");
     }
-
+  #endif
+  printf("====> %s \n",final_lld_path);
 FINISH:
   pocl_destroy_llvm_module (llvm_module);
   POCL_MEM_FREE (objfile);
@@ -285,8 +298,8 @@ FINISH:
   if (error)
     return error;
   else
-    {
-      memcpy (output, final_binary_path, POCL_FILENAME_LENGTH);
+    { 
+      memcpy (output, final_lld_path, POCL_FILENAME_LENGTH);
       return 0;
     }
 }
@@ -997,6 +1010,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
       int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
                                 specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
+      printf("binary_sizes = %ld\n",p->binary_sizes[dev_i]);
       if (error)
         POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
       POCL_MSG_PRINT_INFO ("Built a WG function: %s\n", module_fn);
@@ -1119,7 +1133,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
 
+  printf("module_fn :%s\n",module_fn);
+
   ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
+
+#if 0
   dl_error = dlerror ();
 
   if (ci->dlhandle == NULL || dl_error != NULL)
@@ -1151,7 +1169,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   run_cmd->wg = ci->wg;
   DL_PREPEND (pocl_dlhandle_cache, ci);
-
+#endif
   POCL_UNLOCK (pocl_dlhandle_lock);
   /***************************************************************************/
   POCL_MEM_FREE (module_fn);
