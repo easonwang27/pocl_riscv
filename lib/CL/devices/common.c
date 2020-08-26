@@ -244,8 +244,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   printf("cmd str :%s\n",cmd_str);
   get_system_output(cmd_str,final_lld_path,1024);
   pocl_copy_file(final_lld_path,"/home/eawang/work/file");
-  printf("=====> %d\n",file_size(final_lld_path));
- 
+
 #else
 
   /* Link through Clang driver interface who knows the correct toolchains
@@ -289,7 +288,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
         POCL_MSG_PRINT_LLVM ("Removing temporary kernel.so.o has failed.\n");
     }
   #endif
-  printf("====> %s \n",final_lld_path);
 FINISH:
   pocl_destroy_llvm_module (llvm_module);
   POCL_MEM_FREE (objfile);
@@ -1134,7 +1132,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   printf("module_fn :%s\n",module_fn);
 
-  ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
+  //ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
 
 #if 0
   dl_error = dlerror ();

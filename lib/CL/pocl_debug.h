@@ -107,6 +107,8 @@ extern "C" {
 
 #include "config.h"
 
+
+
 #ifdef POCL_DEBUG_MESSAGES
 
     extern uint64_t pocl_debug_messages_filter;
@@ -206,10 +208,13 @@ extern "C" {
     #define POCL_MSG_PRINT_GENERAL2(errcode, ...) POCL_MSG_PRINT_INFO_F(GENERAL, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_GENERAL(...) POCL_MSG_PRINT_INFO_F(GENERAL, "", __VA_ARGS__)
 
+    #define POCL_MONTAGE_MSG(...) printf(__VA_ARGS__);\
+                                  printf("\n");
+
 #else
 
     #define POCL_DEBUGGING_ON 0
-
+    #define POCL_MONTAGE_MSG(...)  do {} while (0)
     #define POCL_MSG_PRINT_F(...)  do {} while (0)
     #define POCL_MSG_PRINT(...)  do {} while (0)
     #define POCL_MSG_PRINT2(...)  do {} while (0)

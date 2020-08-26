@@ -455,6 +455,7 @@ pocl_montage_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
+  POCL_MONTAGE_MSG("malloc size :%ld\n",mem_obj->size);
   POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
   /* check if some driver has already allocated memory for this mem_obj
      in our global address space, and use that*/
@@ -506,7 +507,6 @@ pocl_montage_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
     }
 
   mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
-
   return CL_SUCCESS;
 }
 
@@ -560,6 +560,7 @@ pocl_montage_write (void *data,
 void
 pocl_montage_launch(void *data, _cl_command_node *cmd)
 {
+  #if 0
   struct data *d;
   struct pocl_argument *al;
   size_t x, y, z;
@@ -715,6 +716,13 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   free(arguments);
 
   pocl_release_dlhandle_cache (cmd);
+
+  #else
+
+  POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
+
+
+  #endif
 }
 
 void
