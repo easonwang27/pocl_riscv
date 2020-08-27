@@ -1224,6 +1224,21 @@ struct _cl_sampler {
   void**              device_data;
 };
 
+//add for montage
+enum host_cmd{
+    POCL_PC = 0xe0,
+    POCL_ELF,
+    POCL_ARG,
+    POCL_NAME,
+    POCL_MOLLOC,
+};
+
+typedef struct _pocl_uart_data {
+  uint8_t  cmd;
+  uint16_t len;
+  const void*  uart_data;
+} pocl_uart_data;
+
 #define CL_FAILED (-1)
 
 #ifndef __cplusplus

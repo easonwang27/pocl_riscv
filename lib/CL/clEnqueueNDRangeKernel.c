@@ -308,7 +308,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc.local_size[0] = local_x;
 
-  printf("=============>command_node->command.run.pc.local_size[0]: %ld\n ",command_node->command.run.pc.local_size[0]);
+
   command_node->command.run.pc.local_size[1] = local_y;
   command_node->command.run.pc.local_size[2] = local_z;
   command_node->command.run.pc.work_dim = work_dim;
@@ -337,6 +337,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       arg->size = arg_alloc_size;
       arg->offset = kernel->dyn_arguments[i].offset;
 
+  
       if (kernel->dyn_arguments[i].value == NULL)
         {
           arg->value = NULL;

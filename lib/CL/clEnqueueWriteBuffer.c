@@ -26,6 +26,8 @@
 #include <assert.h>
 #include "pocl_util.h"
 
+
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                      cl_mem buffer,
@@ -38,6 +40,9 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                      cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device;
+
+  pocl_uart_data *montage_arg =NULL;
+  
   unsigned i;
   _cl_command_node *cmd = NULL;
   int errcode;
@@ -86,12 +91,23 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.write.offset = offset;
   cmd->command.write.size = size;
-  printf("=====> size = %ld\n",size/4);
+  //add for montage
+
+  printf("send arg   cmd\n");
+  montage_arg = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
+  montage_arg->cmd = 0x55;
+  montage_arg->len = size;
+  montage_arg->uart_data = ptr;
+
   //MONTAGE SERIAL INTERFACE
+  //for data debug
+  #if 0
   for( i = 0; i< 10;i++)
   {
-     printf("%d\n",((int *)ptr)[i]); //MEMORY
+     printf("%d\n",((int *)cmd->command.write.src_host_ptr)[i]); //MEMORY
+     printf("%d\n",((int *)montage_arg->uart_data)[i]); //MEMORY
   }
+  #endif
 
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
@@ -101,6 +117,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (blocking_write)
     POname(clFinish) (command_queue);
 
+  free(montage_arg);
   return CL_SUCCESS;
 }
 POsym(clEnqueueWriteBuffer)

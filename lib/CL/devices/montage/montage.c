@@ -70,6 +70,7 @@ struct data {
   /* printf buffer */
   void *printf_buffer;
 };
+// add for pocl
 
 static const cl_image_format supported_image_formats[] = {
     { CL_A, CL_SNORM_INT8 },
@@ -557,149 +558,105 @@ pocl_montage_write (void *data,
   memcpy ((char *)device_ptr + offset, host_ptr, size);
 }
 
+#define MAX_DLFW_PAGE_SIZE 1000
+
 extern char final_lld_path[POCL_FILENAME_LENGTH];
 void
 pocl_montage_launch(void *data, _cl_command_node *cmd)
 {
 
   struct data *d;
+  pocl_uart_data *montage_elf =NULL;
+  pocl_uart_data *montage_kname =NULL;
+  pocl_uart_data *montage_local_size =NULL;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_kernel kernel = cmd->command.run.kernel;
   unsigned i;
-  int j = 1;
-
+  unsigned j ;
   char *PreprocessedOut = NULL;
   uint64_t PreprocessedSize = 0;
-  
-  printf("=============>command_node->command.run.pc.local_size[0]: %ld\n ",cmd->command.run.pc.local_size[0]);
+
+ 	uint64_t	pageNums, remainSize ;
+	uint64_t	page, offset;
+
+  printf("send elf data cmd\n");
   pocl_read_file(final_lld_path, &PreprocessedOut, &PreprocessedSize);
   printf("kernel size :%ld\n",PreprocessedSize);
 
-	printf("###### %s ######\n", __func__);
-	for (i = 0; i < PreprocessedSize; i++) {
+  //elf data
+  montage_elf = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
+  montage_elf->cmd = 0x55;
+  montage_elf->len = PreprocessedSize;
+  montage_elf->uart_data = PreprocessedOut;
+
+  printf("###### %s ######\n", __func__);
+  for( i = 0; i< 10;i++)
+  {
+     printf("%08x-\n",((char *)montage_elf->uart_data)[i]); //MEMORY
+     if (j%10 == 0)
+			printf("\n");
+		j++;
+  }
+  printf("###### %s ######\n", __func__);
+
+	for (i = 0; i < 10; i++) {
 		printf("%08x-", *(PreprocessedOut+i));
 		if (j%10 == 0)
 			printf("\n");
 		j++;
 	}
 	printf("\n");
-  /* always remove preprocessed output - the sources are in different files */
-  //pocl_remove(final_lld_path);
-  POCL_MONTAGE_MSG("lauch kernel bin send to device\n");
+  printf("send kernel name cmd\n");
+  //name data
+  montage_kname = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
+  montage_kname->cmd = 0x55;
+  montage_kname->len = sizeof(kernel->name);
+  montage_kname->uart_data = kernel->name;
 
 
-#if 0
-  void **arguments = (void **)malloc (sizeof (void *)
-                                      * (meta->num_args + meta->num_locals));
-  /* Process the kernel arguments. Convert the opaque buffer
-     pointers to real device pointers, allocate dynamic local
-     memory buffers, etc. */
 
-    for (i = 0; i < meta->num_args; ++i)
-    {
-      al = &(cmd->command.run.arguments[i]);
-      if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-        {
-          /* It's legal to pass a NULL pointer to clSetKernelArguments. In
-             that case we must pass the same NULL forward to the kernel.
-             Otherwise, the user must have created a buffer with per device
-             pointers stored in the cl_mem. */
-          arguments[i] = malloc (sizeof (void *));
-          if (al->value == NULL)
-            {
-              *(void **)arguments[i] = NULL;
-            }
-          else
-            {
-              cl_mem m = (*(cl_mem *)(al->value));
-              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
-              *(void **)arguments[i] = (char *)ptr + al->offset;
-            }
-        }
-    }
-    printf("meta->num_args  :%d\n",meta->num_args);
-   
+  printf("send local work size  cmd\n");
+  //name data
+  montage_local_size = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
+  montage_local_size->cmd = 0x55;
+  montage_local_size->len = sizeof(kernel->name);
+  montage_local_size->uart_data =&cmd->command.run.pc.local_size[0];
 
 
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        size_t s = meta->local_sizes[i];
-        size_t j = meta->num_args + i;
-        arguments[j] = malloc (sizeof (void *));
-        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-        *(void **)(arguments[j]) = pp;
-      }
+  #if 0
+  pageNums = PreprocessedSize / MAX_DLFW_PAGE_SIZE ;
+	remainSize = PreprocessedSize % MAX_DLFW_PAGE_SIZE;
 
-  pc->printf_buffer = d->printf_buffer;
-  assert (pc->printf_buffer != NULL);
-  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
-  assert (pc->printf_buffer_capacity > 0);
-  uint32_t position = 0;
-  pc->printf_buffer_position = &position;
+  for (page = 0; page < pageNums; page++) {
+		   offset = page * MAX_DLFW_PAGE_SIZE;
+       	printf("%ld\n", offset);
+		   //ret = _PageWrite(padapter, page, bufferPtr + offset, MAX_DLFW_PAGE_SIZE);
 
-  unsigned rm = pocl_save_rm ();
-  pocl_set_default_rm ();
-  unsigned ftz = pocl_save_ftz ();
-  pocl_set_ftz (kernel->program->flush_denorms);
-
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    for (y = 0; y < pc->num_groups[1]; ++y)
-      for (x = 0; x < pc->num_groups[0]; ++x)
-        ((pocl_workgroup_func) cmd->command.run.wg)
-	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
-
-  pocl_restore_rm (rm);
-  pocl_restore_ftz (ftz);
-
-  if (position > 0)
-    {
-      write (STDOUT_FILENO, pc->printf_buffer, position);
-      position = 0;
-    }
-
-  for (i = 0; i < meta->num_args; ++i)
-    {
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
-        {
-          if (!cmd->device->device_alloca_locals)
-            {
-              POCL_MEM_FREE(*(void **)(arguments[i]));
-              POCL_MEM_FREE(arguments[i]);
-            }
-          else
-            {
-              /* Device side local space allocation has deallocation via stack
-                 unwind. */
-            }
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE
-               || meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          if (meta->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
-            POCL_MEM_FREE (*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-        {
-          POCL_MEM_FREE(arguments[i]);
-        }
-    }
-
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
-        POCL_MEM_FREE (arguments[meta->num_args + i]);
-      }
+	}
  
+	if (remainSize) {
+		offset = pageNums * MAX_DLFW_PAGE_SIZE;
+    printf("%ld\n", offset);
+		page = pageNums;
+		//ret = _PageWrite(padapter, page, bufferPtr + offset, remainSize);
 
-  pocl_release_dlhandle_cache (cmd);
-  free(arguments);
-  #else
- 
+	}
 
-  POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
+	printf("###### %s ######\n", __func__);
+	for (i = 0; i < 10; i++) {
+		printf("%08x-", *(PreprocessedOut+i));
+		if (j%10 == 0)
+			printf("\n");
+		j++;
+	}
+	printf("\n");
   #endif
+
+  free(montage_elf);
+  free(montage_kname);
+  free(montage_local_size);
+  POCL_MONTAGE_MSG("lauch kernel bin send to device\n");
+  POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
 }
 
 void

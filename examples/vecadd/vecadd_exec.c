@@ -20,7 +20,7 @@ exec_vecadd_kernel (cl_context context, cl_device_id device,
   size_t local_work_size[1];
   cl_int err = CL_SUCCESS;
   int i;
-
+  
   poclu_bswap_cl_float_array (device, (cl_float *)srcA, 4 * n);
   poclu_bswap_cl_float_array (device, (cl_float *)srcB, 4 * n);
 
