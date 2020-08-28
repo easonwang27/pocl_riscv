@@ -289,35 +289,28 @@ void *monitor_serial_readable(void *arg)
     uint8_t dest[1024]={0};
     int read_status = 0;
     int dest_cnt = 0;
-
+     int transfer_started=0;
     while(1)
-    {
-        FD_ZERO(&rset);
-        FD_SET(fd,&rset);
-
-        timeout.tv_sec=0;
-        timeout.tv_usec=100000;
-	      int i = 1000;
+    {   
         rd_num=read(fd,buf,sizeof(buf));
+        timeout.tv_sec=0;
+        timeout.tv_usec=200000;
         if(rd_num>0)
         {
-            printf("%d(interval%4.3fs)：we can read \"%s\" from the tty,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
-            getCompleteFrame(buf,rd_num,dest,dest_cnt,&read_status);
-            if(read_status == 2 )
-            {
-                pocl_serial_send(fd,"hello,pocl!\n",sizeof("hello,pocl!\n"));
-            }
+            printf("%d(间隔%4.3fs)：we can read \"%s\" from the COM1,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
+            transfer_started=1; 
         }
-
+        else{
+            printf("%d(间隔%4.3fs)：read fail! rd_num=%d。本次数据传输%s\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,rd_num,transfer_started==1?"已经结束":"尚未开始");
+        
+          }
         select(0,NULL,NULL,NULL,&timeout);/*精确定时*/
-    }//END_while
-
+    }
 } 
 
 void print_frame(const char *desc,uint8_t *buf,int size)
 {
     int i;
-
     printf(RED"[%s] [LEN=%d]"NONE,desc,size);
     for(i=0; i<size; i++)
     {
@@ -330,15 +323,19 @@ void print_frame(const char *desc,uint8_t *buf,int size)
 void getCompleteFrame(uint8_t *inBuf,int inCnt,uint8_t *outBuf,int destCnt,int *readStatus)
 {
     int i;
-    for(i=0; i<inCnt; i++)
+
+    printf("inBuf[i] = 0x%x\n",inBuf[i]);
+
+    for(i = 0; i< inCnt; i++)
     {
-        if(inBuf[i] == 0x11 && inBuf[i+2] == 0x15 && inBuf[i+3] == 0x19)//header
+        if(inBuf[i] == 0xe2)//header
         {
             outBuf[(destCnt)++] = inBuf[i];
             *readStatus = 1;
-             print_frame("header",outBuf,destCnt);
-             continue;
+             //print_frame("header",outBuf,destCnt);
+            // continue;
         }
+        /*
         if(*readStatus == 1)//body
         {
             outBuf[(destCnt)++] = inBuf[i];    
@@ -353,7 +350,9 @@ void getCompleteFrame(uint8_t *inBuf,int inCnt,uint8_t *outBuf,int destCnt,int *
             memset(inBuf,0,sizeof(inBuf));
             continue;
         }
+        */
     }
+
 }
 
 int pocl_serial_send(int fd, char *send_buf, int data_len)
@@ -363,7 +362,7 @@ int pocl_serial_send(int fd, char *send_buf, int data_len)
     ret = write(fd, send_buf, data_len);
     if (ret == data_len)
     {
-        printf("send data is %s\n", send_buf);
+        //printf("send data is %s\n", send_buf);
         return ret;
     }
     else
@@ -397,14 +396,14 @@ int pocl_uart_config()
     flag=tcgetattr(fd,&term);/*取得终端设备fd的属性，存放在termios类型的结构体term中*/
     baud_rate_i=cfgetispeed(&term);/*从term中读取输入波特率*/
     baud_rate_o=cfgetospeed(&term);/*从term中读取输出波特率*/
-    printf("baudrate of in is:%d,baudrate of out is %d,fd=%d\n",baud_rate_i,baud_rate_o,fd);/*打印设置之前的波特率，目的是方便和设置之后的波特率对比*/
+    //printf("baudrate of in is:%d,baudrate of out is %d,fd=%d\n",baud_rate_i,baud_rate_o,fd);/*打印设置之前的波特率，目的是方便和设置之后的波特率对比*/
 
-    set_speed(fd,115200);
+    set_speed(fd,38400);
 
     flag=tcgetattr(fd,&term);
     baud_rate_i=cfgetispeed(&term);
     baud_rate_o=cfgetospeed(&term);
-    printf("baudrate of out is:%d,baudrate of out is %d,fd=%d\n",baud_rate_i,baud_rate_o,fd);/*打印设置之前的波特率，目的是方便和设置之后的波特率对比*/
+    //printf("baudrate of out is:%d,baudrate of out is %d,fd=%d\n",baud_rate_i,baud_rate_o,fd);/*打印设置之前的波特率，目的是方便和设置之后的波特率对比*/
 
    if (set_Parity(fd,8,1,'N')== FALSE)
     {
@@ -910,18 +909,15 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
 	
   for (page = 0; page < pageNums; page++) {
         offset = page * MAX_DLFW_PAGE_SIZE;
-        printf("offset = %d\n",offset);
         pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
    
   }
   if (remainSize) {
-      // printf("remainSize = %d\n",remainSize);
        offset = pageNums * MAX_DLFW_PAGE_SIZE;
-       //printf("offset = %d\n",offset);
        pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
   }
   
- 
+
   free(s);
 
   printf("send kernel name cmd\n");
@@ -933,18 +929,23 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   name_cmd[2] = ((len >> 8 )& 0xff);//size;
 
   memcpy(name_cmd+3,kernel->name,len);
-
+   sleep(1);
   pocl_serial_send(fd,name_cmd,MAX_DLFW_PAGE_SIZE);
 
   printf("send local work size  cmd\n");
   char local_cmd[MAX_DLFW_PAGE_SIZE];
+
   memset(local_cmd,0x00,MAX_DLFW_PAGE_SIZE);
 
   local_cmd[0] = POCL_PC;
-  local_cmd[1] = 64;
-  local_cmd[3] = 0;
-
+  local_cmd[1] = 2;
+  local_cmd[2] = 0; 
+  local_cmd[3] = 64;
+  sleep(1);
   pocl_serial_send(fd,local_cmd,MAX_DLFW_PAGE_SIZE);
+
+  
+
 /*
   //elf data
   montage_elf = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
