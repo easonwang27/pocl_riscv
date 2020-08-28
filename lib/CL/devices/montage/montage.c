@@ -84,7 +84,7 @@ int fd;
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 4096
-
+#define MAX_DLFW_PAGE_SIZE 1024
 
 void set_speed(int, int);       
 int set_Parity(int,int,int,int);
@@ -411,7 +411,6 @@ int pocl_uart_config()
         printf("Set Parity Error\n");
         exit(1);
     }
-    pocl_serial_send(fd,"hello",sizeof("hello"));
 
    
 }
@@ -759,9 +758,6 @@ pocl_montage_init (unsigned j, cl_device_id device, const char* parameters)
    pocl_uart_config(); //add for pocl uart
 
 
-   printf("=================> go out!\n");
-
-
   return ret;
 }
 
@@ -859,6 +855,7 @@ pocl_montage_read (void *data,
   memcpy (host_ptr, (char *)device_ptr + offset, size);
 }
 
+extern uint8_t my_arg[MAX_DLFW_PAGE_SIZE];
 void
 pocl_montage_write (void *data,
                   const void *__restrict__  host_ptr,
@@ -866,14 +863,17 @@ pocl_montage_write (void *data,
                   cl_mem dst_buf,
                   size_t offset, size_t size)
 {
+  int i;
   void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
   if (host_ptr == device_ptr)
     return;
-
+  
   memcpy ((char *)device_ptr + offset, host_ptr, size);
+
+  pocl_serial_send(fd,my_arg,MAX_DLFW_PAGE_SIZE);
 }
 
-#define MAX_DLFW_PAGE_SIZE 1000
+
 
 extern char final_lld_path[POCL_FILENAME_LENGTH];
 void
@@ -883,9 +883,6 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   struct data *d;
   pthread_t wtid;
   int rd_num=0;
-  pocl_uart_data *montage_elf =NULL;
-  pocl_uart_data *montage_kname =NULL;
-  pocl_uart_data *montage_local_size =NULL;
   struct pocl_context *pc = &cmd->command.run.pc;
   cl_kernel kernel = cmd->command.run.kernel;
   unsigned i;
@@ -896,10 +893,59 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
  	uint64_t	pageNums, remainSize ;
 	uint64_t	page, offset;
 
+  char elf_cmd [3] = {0x00};
   printf("send elf data cmd\n");
   pocl_read_file(final_lld_path, &PreprocessedOut, &PreprocessedSize);
-  printf("kernel size :%ld\n",PreprocessedSize);
 
+  elf_cmd[0] = POCL_ELF;
+  elf_cmd[1] = (PreprocessedSize - PreprocessedSize % 0x10) / 0x10;
+  elf_cmd[2] =  PreprocessedSize % 0x10;
+
+  char* s=(char*)malloc(3+PreprocessedSize+1);
+  memcpy(s,elf_cmd,3);
+  memcpy(s+3,PreprocessedOut,PreprocessedSize+1);
+
+  pageNums = (PreprocessedSize+3) / MAX_DLFW_PAGE_SIZE ;
+  remainSize = (PreprocessedSize+3) % MAX_DLFW_PAGE_SIZE;
+	
+  for (page = 0; page < pageNums; page++) {
+        offset = page * MAX_DLFW_PAGE_SIZE;
+        printf("offset = %d\n",offset);
+        pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
+   
+  }
+  if (remainSize) {
+      // printf("remainSize = %d\n",remainSize);
+       offset = pageNums * MAX_DLFW_PAGE_SIZE;
+       //printf("offset = %d\n",offset);
+       pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
+  }
+  
+ 
+  free(s);
+
+  printf("send kernel name cmd\n");
+  char name_cmd[MAX_DLFW_PAGE_SIZE];
+  memset(name_cmd,0x00,MAX_DLFW_PAGE_SIZE);
+  name_cmd[0] = POCL_NAME;
+  int len =  strlen(kernel->name);
+  name_cmd[1] = (len&0xff) ;
+  name_cmd[2] = ((len >> 8 )& 0xff);//size;
+
+  memcpy(name_cmd+3,kernel->name,len);
+
+  pocl_serial_send(fd,name_cmd,MAX_DLFW_PAGE_SIZE);
+
+  printf("send local work size  cmd\n");
+  char local_cmd[MAX_DLFW_PAGE_SIZE];
+  memset(local_cmd,0x00,MAX_DLFW_PAGE_SIZE);
+
+  local_cmd[0] = POCL_PC;
+  local_cmd[1] = 64;
+  local_cmd[3] = 0;
+
+  pocl_serial_send(fd,local_cmd,MAX_DLFW_PAGE_SIZE);
+/*
   //elf data
   montage_elf = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
   montage_elf->cmd = 0x55;
@@ -914,65 +960,12 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
 			printf("\n");
 		j++;
   }
-  printf("###### %s ######\n", __func__);
-
-	for (i = 0; i < 10; i++) {
-		printf("%08x-", *(PreprocessedOut+i));
-		if (j%10 == 0)
-			printf("\n");
-		j++;
-	}
-	printf("\n");
-  printf("send kernel name cmd\n");
-  //name data
-  montage_kname = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
-  montage_kname->cmd = 0x55;
-  montage_kname->len = sizeof(kernel->name);
-  montage_kname->uart_data = kernel->name;
-
-
-
-  printf("send local work size  cmd\n");
-  //name data
-  montage_local_size = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
-  montage_local_size->cmd = 0x55;
-  montage_local_size->len = sizeof(kernel->name);
-  montage_local_size->uart_data =&cmd->command.run.pc.local_size[0];
-
-
-  #if 0
-  pageNums = PreprocessedSize / MAX_DLFW_PAGE_SIZE ;
-	remainSize = PreprocessedSize % MAX_DLFW_PAGE_SIZE;
-
-  for (page = 0; page < pageNums; page++) {
-		   offset = page * MAX_DLFW_PAGE_SIZE;
-       	printf("%ld\n", offset);
-		   //ret = _PageWrite(padapter, page, bufferPtr + offset, MAX_DLFW_PAGE_SIZE);
-
-	}
  
-	if (remainSize) {
-		offset = pageNums * MAX_DLFW_PAGE_SIZE;
-    printf("%ld\n", offset);
-		page = pageNums;
-		//ret = _PageWrite(padapter, page, bufferPtr + offset, remainSize);
-
-	}
-
-	printf("###### %s ######\n", __func__);
-	for (i = 0; i < 10; i++) {
-		printf("%08x-", *(PreprocessedOut+i));
-		if (j%10 == 0)
-			printf("\n");
-		j++;
-	}
-	printf("\n");
-  #endif
-  free(montage_elf);
-  free(montage_kname);
-  free(montage_local_size);
-  POCL_MONTAGE_MSG("lauch kernel bin send to device\n");
-  rd_num = pthread_create(&wtid,NULL,monitor_serial_readable,&fd);
+  ;
+  sleep(1);
+*/
+    sleep(1);
+    rd_num = pthread_create(&wtid,NULL,monitor_serial_readable,&fd);
     if(rd_num != 0)
     {
         printf("create thread failed\n");
@@ -985,8 +978,8 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
         exit(-1);
     }
    
-  
-  POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
+
+ // POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
 }
 
 void

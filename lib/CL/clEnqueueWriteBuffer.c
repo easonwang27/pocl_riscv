@@ -27,6 +27,7 @@
 #include "pocl_util.h"
 
 
+uint8_t my_arg[1024] ={0};
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
@@ -44,6 +45,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   pocl_uart_data *montage_arg =NULL;
   
   unsigned i;
+  
   _cl_command_node *cmd = NULL;
   int errcode;
 
@@ -97,15 +99,28 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   montage_arg = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
   montage_arg->cmd = 0x55;
   montage_arg->len = size;
-  montage_arg->uart_data = ptr;
 
+  printf("====> size %d\n",size);
+
+  
+ // pocl_serial_send(fd,((char *)cmd->command.write.src_host_ptr),10);
   //MONTAGE SERIAL INTERFACE
   //for data debug
-  #if 0
-  for( i = 0; i< 10;i++)
+
+  memset(my_arg,0x0,1024);
+
+  //high = ((offset >> 8 )& 0xff);
+	//low = (offset&0xff) ;
+  my_arg[0] = POCL_ARG;
+  
+  my_arg[1] = (size&0xff) ;
+  my_arg[2] = ((size >> 8 )& 0xff);//size;
+
+  #if 1
+  for( i = 0; i< size;i++)
   {
-     printf("%d\n",((int *)cmd->command.write.src_host_ptr)[i]); //MEMORY
-     printf("%d\n",((int *)montage_arg->uart_data)[i]); //MEMORY
+      my_arg[i+3] = ((uint8_t *)ptr)[i];
+
   }
   #endif
 

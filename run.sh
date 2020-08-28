@@ -11,7 +11,7 @@ cmake  ../ -G "Unix Makefiles" -DENABLE_MONTAGE_DEVICES=ON \
 -DLLVM_LLI:FILEPATH=/home/eawang/_worklib/bin/lli \
 -DLLVM_OPT:FILEPATH=/home/eawang/_worklib/bin/opt 
 
-make -j16
+make -j8
 
 sudo make install
 cd ..
