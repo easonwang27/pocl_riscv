@@ -89,7 +89,7 @@
 
 #ifdef OCS_AVAILABLE
 
-#define OBJLLD  "/home/fei/llvm10/bin/ld.lld"
+#define OBJLLD  "/home/eawang/_worklib/bin/ld.lld"
 int
 get_system_output(char *cmd, char *output, int size)
 {
