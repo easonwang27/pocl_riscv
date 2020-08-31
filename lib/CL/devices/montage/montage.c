@@ -91,7 +91,7 @@ int set_Parity(int,int,int,int);
 void print_frame(const char *desc,uint8_t *buf,int size);
 void getCompleteFrame(uint8_t *inBuf,int inCnt,uint8_t *outBuf,int destCnt,int *readStatus);
 void *monitor_serial_readable(void *arg);
-int pocl_serial_send(int fd, char *send_buf, int data_len);
+int pocl_serial_send(int fd, uint8_t *send_buf, int data_len);
 
 struct data {
   /* Currently loaded kernel. */
@@ -141,7 +141,7 @@ static const cl_image_format supported_image_formats[] = {
     { CL_BGRA, CL_SIGNED_INT8 },
     { CL_BGRA, CL_UNSIGNED_INT8 }
  };
-
+//307200
 void set_speed(int fd, int speed)
 {
     unsigned int   i; 
@@ -170,8 +170,6 @@ void set_speed(int fd, int speed)
         tcflush(fd,TCIOFLUSH);   
         } 
         }
-
-
     //激活配置 (将修改后的termios数据设置到串口中）  
     if (tcsetattr(fd,TCSANOW,&Opt) != 0)    
     {  
@@ -293,15 +291,15 @@ void *monitor_serial_readable(void *arg)
     while(1)
     {   
         rd_num=read(fd,buf,sizeof(buf));
-        timeout.tv_sec=0;
-        timeout.tv_usec=200000;
+        timeout.tv_sec=1;
+        timeout.tv_usec=0;
         if(rd_num>0)
         {
-            printf("%d(间隔%4.3fs)：we can read \"%s\" from the COM1,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
+            printf("%d(interval%4.3fs)：we can read \"%s\" from the uart interface,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
             transfer_started=1; 
         }
         else{
-            printf("%d(间隔%4.3fs)：read fail! rd_num=%d。本次数据传输%s\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,rd_num,transfer_started==1?"已经结束":"尚未开始");
+            printf("%d(interval%4.3fs)：read fail! rd_num=%d.This data transfer :%s\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,rd_num,transfer_started==1?"Is over":"Not yet started");
         
           }
         select(0,NULL,NULL,NULL,&timeout);/*精确定时*/
@@ -355,14 +353,27 @@ void getCompleteFrame(uint8_t *inBuf,int inCnt,uint8_t *outBuf,int destCnt,int *
 
 }
 
-int pocl_serial_send(int fd, char *send_buf, int data_len)
+int pocl_serial_send(int fd, uint8_t *send_buf, int data_len)
 {
     ssize_t ret = 0;
+
+    int i = 0;
+    int j = 0;
+    sleep(1);
+    printf("data_len = %d\n",data_len);
+
+   for(i = 0; i <data_len;i++)
+   {  j++;
+      printf("%02x ",(uint8_t)send_buf[i]);
+      if(j%16==0)
+          printf("\n");
+   }
+   printf("\n");
 
     ret = write(fd, send_buf, data_len);
     if (ret == data_len)
     {
-        //printf("send data is %s\n", send_buf);
+        
         return ret;
     }
     else
@@ -391,7 +402,7 @@ int pocl_uart_config()
     if(fd==-1)
         printf("can not open the COM1!\n");
     else
-        printf("open COM1 ok!\n");
+        printf("open uart ok!\n");
 
     flag=tcgetattr(fd,&term);/*取得终端设备fd的属性，存放在termios类型的结构体term中*/
     baud_rate_i=cfgetispeed(&term);/*从term中读取输入波特率*/
@@ -766,7 +777,7 @@ pocl_montage_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
-  POCL_MONTAGE_MSG("malloc size :%ld\n",mem_obj->size);
+ // POCL_MONTAGE_MSG("malloc size :%ld\n",mem_obj->size);
   POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
   /* check if some driver has already allocated memory for this mem_obj
      in our global address space, and use that*/
@@ -868,8 +879,8 @@ pocl_montage_write (void *data,
     return;
   
   memcpy ((char *)device_ptr + offset, host_ptr, size);
-
   pocl_serial_send(fd,my_arg,MAX_DLFW_PAGE_SIZE);
+
 }
 
 
@@ -892,13 +903,19 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
  	uint64_t	pageNums, remainSize ;
 	uint64_t	page, offset;
 
-  char elf_cmd [3] = {0x00};
+  uint8_t elf_cmd [3] = {0x00};
   printf("send elf data cmd\n");
   pocl_read_file(final_lld_path, &PreprocessedOut, &PreprocessedSize);
 
+  printf("final_lld_path :%s\n",final_lld_path);
+  printf("PreprocessedSize =%02x\n",PreprocessedSize);
+
   elf_cmd[0] = POCL_ELF;
-  elf_cmd[1] = (PreprocessedSize - PreprocessedSize % 0x10) / 0x10;
-  elf_cmd[2] =  PreprocessedSize % 0x10;
+ // elf_cmd[1] = (PreprocessedSize - PreprocessedSize % 0x10) / 0x10;
+  //elf_cmd[2] =  PreprocessedSize % 0x10;
+
+  elf_cmd[1] = (PreprocessedSize&0xff) ;
+  elf_cmd[2] = ((PreprocessedSize >> 8 )& 0xff);//size;
 
   char* s=(char*)malloc(3+PreprocessedSize+1);
   memcpy(s,elf_cmd,3);
@@ -906,31 +923,43 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
 
   pageNums = (PreprocessedSize+3) / MAX_DLFW_PAGE_SIZE ;
   remainSize = (PreprocessedSize+3) % MAX_DLFW_PAGE_SIZE;
-	
+#if 0
+  j =0;
+  for (i = 0; i < PreprocessedSize; i++) {
+
+      printf("%02x ",(uint8_t)PreprocessedOut[i]);
+      j++;
+      if(j%16==0)
+          printf("\n");
+       
+  }
+
+#endif
+
   for (page = 0; page < pageNums; page++) {
         offset = page * MAX_DLFW_PAGE_SIZE;
         pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
+
    
   }
   if (remainSize) {
        offset = pageNums * MAX_DLFW_PAGE_SIZE;
        pocl_serial_send(fd,s + offset, MAX_DLFW_PAGE_SIZE);
   }
-  
 
   free(s);
 
   printf("send kernel name cmd\n");
-  char name_cmd[MAX_DLFW_PAGE_SIZE];
+  uint8_t name_cmd[MAX_DLFW_PAGE_SIZE];
   memset(name_cmd,0x00,MAX_DLFW_PAGE_SIZE);
   name_cmd[0] = POCL_NAME;
   int len =  strlen(kernel->name);
   name_cmd[1] = (len&0xff) ;
   name_cmd[2] = ((len >> 8 )& 0xff);//size;
-
   memcpy(name_cmd+3,kernel->name,len);
-   sleep(1);
   pocl_serial_send(fd,name_cmd,MAX_DLFW_PAGE_SIZE);
+
+
 
   printf("send local work size  cmd\n");
   char local_cmd[MAX_DLFW_PAGE_SIZE];
@@ -938,14 +967,13 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   memset(local_cmd,0x00,MAX_DLFW_PAGE_SIZE);
 
   local_cmd[0] = POCL_PC;
-  local_cmd[1] = 2;
+  local_cmd[1] = 1;
   local_cmd[2] = 0; 
-  local_cmd[3] = 64;
-  sleep(1);
+  local_cmd[3] = 1;
   pocl_serial_send(fd,local_cmd,MAX_DLFW_PAGE_SIZE);
 
   
-
+  sleep(3);
 /*
   //elf data
   montage_elf = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
@@ -965,21 +993,19 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   ;
   sleep(1);
 */
-    sleep(1);
-    rd_num = pthread_create(&wtid,NULL,monitor_serial_readable,&fd);
-    if(rd_num != 0)
-    {
+  rd_num = pthread_create(&wtid,NULL,monitor_serial_readable,&fd);
+  if(rd_num != 0)
+  {
         printf("create thread failed\n");
         exit(-1);
-    }
-    rd_num = pthread_join(wtid,NULL);
-    if(rd_num != 0)
-    {
+  }
+  rd_num = pthread_join(wtid,NULL);
+  if(rd_num != 0)
+  {
         printf("join thread failed\n");
         exit(-1);
-    }
+  }
    
-
  // POCL_MONTAGE_MSG("pocl_montage_launch ok!\n");
 }
 

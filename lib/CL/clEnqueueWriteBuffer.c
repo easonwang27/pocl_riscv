@@ -100,15 +100,10 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   montage_arg->cmd = 0x55;
   montage_arg->len = size;
 
-  printf("====> size %d\n",size);
-
-  
  // pocl_serial_send(fd,((char *)cmd->command.write.src_host_ptr),10);
   //MONTAGE SERIAL INTERFACE
   //for data debug
-
   memset(my_arg,0x0,1024);
-
   //high = ((offset >> 8 )& 0xff);
 	//low = (offset&0xff) ;
   my_arg[0] = POCL_ARG;
