@@ -29,6 +29,7 @@
 
 uint8_t my_arg[1024] ={0};
 
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                      cl_mem buffer,
@@ -93,6 +94,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.write.offset = offset;
   cmd->command.write.size = size;
+
   //add for montage
 
   printf("send arg   cmd\n");
@@ -107,17 +109,16 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   //high = ((offset >> 8 )& 0xff);
 	//low = (offset&0xff) ;
   my_arg[0] = POCL_ARG;
-  
+
   my_arg[1] = (size&0xff) ;
   my_arg[2] = ((size >> 8 )& 0xff);//size;
 
-  #if 1
   for( i = 0; i< size;i++)
   {
       my_arg[i+3] = ((uint8_t *)ptr)[i];
 
   }
-  #endif
+  
 
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;

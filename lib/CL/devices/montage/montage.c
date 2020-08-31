@@ -81,6 +81,8 @@
 #error montage driver requires DL library
 #endif
 int fd;
+
+
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 4096
@@ -141,7 +143,7 @@ static const cl_image_format supported_image_formats[] = {
     { CL_BGRA, CL_SIGNED_INT8 },
     { CL_BGRA, CL_UNSIGNED_INT8 }
  };
-//307200
+
 void set_speed(int fd, int speed)
 {
     unsigned int   i; 
@@ -283,11 +285,11 @@ void *monitor_serial_readable(void *arg)
     int rd_num,i,nread=0;
     fd_set rset;
     struct timeval timeout;
-    uint8_t buf[1024] = {0};
-    uint8_t dest[1024]={0};
+    uint8_t buf[2048] = {0};
     int read_status = 0;
     int dest_cnt = 0;
-     int transfer_started=0;
+    int transfer_started=0;
+  
     while(1)
     {   
         rd_num=read(fd,buf,sizeof(buf));
@@ -295,7 +297,7 @@ void *monitor_serial_readable(void *arg)
         timeout.tv_usec=0;
         if(rd_num>0)
         {
-            printf("%d(interval%4.3fs)：we can read \"%s\" from the uart interface,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
+            printf("%d(interval%4.3fs)：we can read \n\"%s\" \n from the uart interface,total:%d characters.\n",++i,timeout.tv_sec+timeout.tv_usec*0.000001,buf,rd_num);
             transfer_started=1; 
         }
         else{
@@ -303,6 +305,10 @@ void *monitor_serial_readable(void *arg)
         
           }
         select(0,NULL,NULL,NULL,&timeout);/*精确定时*/
+
+        if(sizeof(buf) == 2048)
+              break;
+      
     }
 } 
 
@@ -399,10 +405,11 @@ int pocl_uart_config()
     int dest_cnt = 0;
 
     fd=open(DEV_NAME,O_RDWR|O_NONBLOCK);
-    if(fd==-1)
-        printf("can not open the COM1!\n");
-    else
-        printf("open uart ok!\n");
+    if (-1 == fd)
+		{ /*设置数据位数*/
+			perror("Can't Open Serial Port");
+			return -1;
+		}
 
     flag=tcgetattr(fd,&term);/*取得终端设备fd的属性，存放在termios类型的结构体term中*/
     baud_rate_i=cfgetispeed(&term);/*从term中读取输入波特率*/
@@ -858,11 +865,15 @@ pocl_montage_read (void *data,
                  cl_mem src_buf,
                  size_t offset, size_t size)
 {
+  int i;
   void *__restrict__ device_ptr = src_mem_id->mem_ptr;
   if (host_ptr == device_ptr)
     return;
-
+  //  printf("%s",buf);
   memcpy (host_ptr, (char *)device_ptr + offset, size);
+ // memcpy (host_ptr, buf, size);
+
+ 
 }
 
 extern uint8_t my_arg[MAX_DLFW_PAGE_SIZE];
@@ -886,6 +897,7 @@ pocl_montage_write (void *data,
 
 
 extern char final_lld_path[POCL_FILENAME_LENGTH];
+
 void
 pocl_montage_launch(void *data, _cl_command_node *cmd)
 {
@@ -906,9 +918,6 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   uint8_t elf_cmd [3] = {0x00};
   printf("send elf data cmd\n");
   pocl_read_file(final_lld_path, &PreprocessedOut, &PreprocessedSize);
-
-  printf("final_lld_path :%s\n",final_lld_path);
-  printf("PreprocessedSize =%02x\n",PreprocessedSize);
 
   elf_cmd[0] = POCL_ELF;
  // elf_cmd[1] = (PreprocessedSize - PreprocessedSize % 0x10) / 0x10;
@@ -958,8 +967,6 @@ pocl_montage_launch(void *data, _cl_command_node *cmd)
   name_cmd[2] = ((len >> 8 )& 0xff);//size;
   memcpy(name_cmd+3,kernel->name,len);
   pocl_serial_send(fd,name_cmd,MAX_DLFW_PAGE_SIZE);
-
-
 
   printf("send local work size  cmd\n");
   char local_cmd[MAX_DLFW_PAGE_SIZE];

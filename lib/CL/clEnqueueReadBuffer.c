@@ -87,6 +87,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   cmd->command.read.offset = offset;
   cmd->command.read.size = size;
 
+
+ 
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
 
