@@ -61,6 +61,8 @@
         "sstream": "c",
         "stdexcept": "c",
         "streambuf": "c",
-        "thread": "c"
+        "thread": "c",
+        "uart.h": "c",
+        "stdio.h": "c"
     }
 }

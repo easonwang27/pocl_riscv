@@ -23,6 +23,6 @@
 #
 #=============================================================================
 if(MSVC)
-  set_source_files_properties( montage.h montage.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( montage.h montage.c uart.h uart.cPROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_pocl_device_library("pocl-devices-montage" montage.h montage.c)
+add_pocl_device_library("pocl-devices-montage" montage.h montage.c uart.c uart.h)

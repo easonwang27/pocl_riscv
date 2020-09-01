@@ -27,6 +27,7 @@
 #include "pocl_util.h"
 
 
+
 uint8_t my_arg[1024] ={0};
 
 
@@ -42,8 +43,6 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                      cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device;
-
-  pocl_uart_data *montage_arg =NULL;
   
   unsigned i;
   
@@ -97,7 +96,8 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
 
   //add for montage
 
-  printf("send arg   cmd\n");
+ 
+  #if 0
   montage_arg = (pocl_uart_data*)malloc(sizeof(pocl_uart_data));
   montage_arg->cmd = 0x55;
   montage_arg->len = size;
@@ -118,8 +118,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
       my_arg[i+3] = ((uint8_t *)ptr)[i];
 
   }
-  
-
+#endif
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
 
@@ -127,8 +126,6 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
 
   if (blocking_write)
     POname(clFinish) (command_queue);
-
-  free(montage_arg);
   return CL_SUCCESS;
 }
 POsym(clEnqueueWriteBuffer)
